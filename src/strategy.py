@@ -34,6 +34,13 @@ def estimate_p_true(gap: float, seconds_remaining: float, sigma_per_sec: float) 
 
     k = 182.0
     x = k * gap / math.sqrt(seconds_remaining)
+
+    # Clamp x to prevent exp() overflow (exp(709) is near float max)
+    if x > 709:
+        return 1.0
+    if x < -709:
+        return 0.0
+
     return 1.0 / (1.0 + math.exp(-x))
 
 
