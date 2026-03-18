@@ -299,6 +299,8 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
     from src.equity import get_total_equity
     from src.utils import is_in_cooldown
 
+    current_window_slug = None
+
     while True:
         # ── Cooldown Check ───────────────────────────────────────────
         if is_in_cooldown():
@@ -360,15 +362,17 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
         down_odds = state.get("down_odds", 0)
         positions = state.get("positions", [])
 
-        # If window changed, reset state
-        state_window = state.get("window")
-        if not state_window or state_window.slug != window.slug:
-            log.info("--- New 5min Window Detected: %s ---", window.slug)
-            state["window"] = window
+        # ── Window Change Reset ──────────────────────────────────────────
+        if current_window_slug != window.slug:
+            log.info("--- Wallet %d New Window Detected: %s ---", wallet_id, window.slug)
+            current_window_slug = window.slug
             wallet_state["window_locked"] = False
             wallet_state["position_shares"] = 0
             wallet_state["sell_locked"] = False
-            state["last_trade"] = "No trades yet"
+            wallet_state["last_trade"] = "No trades yet"
+            # Optional: update global state if this is the primary wallet or for general visibility
+            if wallet_id == 0:
+                state["last_trade"] = "No trades yet"
 
         # Skip trading logic if data not ready, but continue to show what we have
         if btc_price <= 0 or window.price_to_beat <= 0 or up_odds <= 0 or down_odds <= 0:

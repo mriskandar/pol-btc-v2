@@ -58,6 +58,7 @@ ENTRY_SECONDS_BEFORE_CLOSE: float = float(os.getenv("ENTRY_SECONDS_BEFORE_CLOSE"
 PRE_CLOSE_SELL_SECONDS: float = float(os.getenv("PRE_CLOSE_SELL_SECONDS", "0.7"))
 GAP_TRIGGER_USD: float = float(os.getenv("GAP_TRIGGER_USD", "2.0"))
 GAP_TRIGGER_PERCENT: float = 0.05  # 5% fallback if needed, though USD is preferred
+REDEEM_LOSSES: bool = os.getenv("REDEEM_LOSSES", "True").lower() == "true"
 
 # ── Contract Addresses (Polygon) ────────────────────────────────
 USDC_ADDRESS: str = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"

@@ -78,7 +78,7 @@ def _make_market_panel(state: dict) -> Panel:
     window = state.get("window")
 
     if not window:
-        content = Text("  Scanning for active eth-updown-5m window...\n", style=WARN_COLOR)
+        content = Text("  Scanning for active btc-updown-5m window...\n", style=WARN_COLOR)
         content.append("  Retrying every 5 seconds", style=DIM)
         return Panel(content, title="[bold]📊 Market Window[/]", border_style=BORDER, height=8)
 

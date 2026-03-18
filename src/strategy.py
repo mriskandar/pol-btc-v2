@@ -12,6 +12,18 @@ def norm_cdf(x: float) -> float:
     return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
 
 
+def sigmoid(x: float) -> float:
+    """
+    Robust sigmoid function to avoid OverflowError with math.exp.
+    """
+    if x >= 0:
+        z = math.exp(-x)
+        return 1.0 / (1.0 + z)
+    else:
+        z = math.exp(x)
+        return z / (1.0 + z)
+
+
 @dataclass
 class TradeSignal:
     side: str
@@ -34,14 +46,7 @@ def estimate_p_true(gap: float, seconds_remaining: float, sigma_per_sec: float) 
 
     k = 182.0
     x = k * gap / math.sqrt(seconds_remaining)
-
-    # Clamp x to prevent exp() overflow (exp(709) is near float max)
-    if x > 709:
-        return 1.0
-    if x < -709:
-        return 0.0
-
-    return 1.0 / (1.0 + math.exp(-x))
+    return sigmoid(x)
 
 
 def calculate_edge(p_true: float, market_price: float) -> float:

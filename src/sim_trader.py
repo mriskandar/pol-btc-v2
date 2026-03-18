@@ -177,7 +177,7 @@ async def _resolve_window_outcome(slug: str) -> Optional[str]:
                         
                 if winning_outcome:
                     log.info(
-                        "SIM REETHVE %s: outcomes=%s prices=%s → %s won",
+                        "SIM RESOLVE %s: outcomes=%s prices=%s → %s won",
                         slug, outcomes, outcome_prices, winning_outcome
                     )
                     return winning_outcome
@@ -205,6 +205,8 @@ async def sim_trade_loop(portfolio: SimPortfolio, state: dict) -> None:
     """
     from src.strategy import evaluate_market
     
+    current_window_slug = None
+
     while True:
         window = state.get("window")
         if not window:
@@ -218,11 +220,10 @@ async def sim_trade_loop(portfolio: SimPortfolio, state: dict) -> None:
         state["equity"] = portfolio.get_equity_dict()
         state["positions"] = portfolio.get_positions_list()
 
-        # If window changed, reset state
-        state_window = state.get("window")
-        if not state_window or state_window.slug != window.slug:
+        # ── Window Change Reset ──────────────────────────────────────────
+        if current_window_slug != window.slug:
             log.info("--- SIM New Window Detected: %s ---", window.slug)
-            state["window"] = window
+            current_window_slug = window.slug
             state["window_locked"] = False
             state["last_trade"] = "No trades yet"
             state["position_shares"] = 0

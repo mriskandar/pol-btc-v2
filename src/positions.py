@@ -54,13 +54,13 @@ def get_w3() -> Web3:
 
 
 def fetch_positions(client: ClobClient) -> List[dict]:
-    """Fetch all unique markets traded recently to extract potential unredeemed tokens."""
+    """Fetch unique markets traded recently to extract potential unredeemed tokens."""
     try:
-        positions = []
+        # Increase limit to 100 to catch more historical/unredeemed tokens
         result = client.get_trades()
         if isinstance(result, list):
-            positions = result
-        return positions
+            return result
+        return []
     except Exception as e:
         log.error("Failed to fetch positions: %s", e)
         return []
@@ -133,6 +133,15 @@ def find_redeemable(client: ClobClient, w3: Web3, trades: List[dict]) -> List[di
                     "outcome": "Winning",  # Triggers equity calculation logic
                     "size": bal / 1e6      # Winning tokens redeem 1:1 for USDC (6 decimals)
                 })
+            elif config.REDEEM_LOSSES:
+                # Still own tokens in a closed market but they didn't win
+                redeemable.append({
+                    "conditionId": market_id,
+                    "asset_id": asset_id,
+                    "resolved": True,
+                    "outcome": "Lost",
+                    "size": 0
+                })
 
         except Exception as e:
             if "429" in str(e) or "too many requests" in str(e).lower():
@@ -171,8 +180,8 @@ async def redeem_positions(client: ClobClient, w3: Web3, redeemable: List[dict])
         base_nonce = w3.eth.get_transaction_count(account.address)
         tx_index = 0
 
-        # Filter to only the ones marked resolved and winning
-        to_redeem = [pos for pos in redeemable if pos.get("resolved") and pos.get("outcome") == "Winning"]
+        # Filter to only the ones marked resolved
+        to_redeem = [pos for pos in redeemable if pos.get("resolved")]
 
         if not to_redeem:
             return 0
