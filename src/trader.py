@@ -369,6 +369,11 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
             await asyncio.sleep(0.05)
             continue
 
+        btc_price = state.get("btc_price", 0)
+        up_odds = state.get("up_odds", 0)
+        down_odds = state.get("down_odds", 0)
+        positions = state.get("positions", [])
+
         # Skip trading logic if data not ready, but continue to show what we have
         if btc_price <= 0 or window.price_to_beat <= 0 or up_odds <= 0 or down_odds <= 0:
             await asyncio.sleep(0.5)
