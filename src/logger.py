@@ -28,7 +28,7 @@ def get_log_buffer() -> deque:
     return _log_buffer
 
 
-def setup_logging() -> logging.Logger:
+def setup_logging(headless: bool = False) -> logging.Logger:
     logger = logging.getLogger("polybot")
     logger.setLevel(logging.DEBUG)
 
@@ -41,9 +41,20 @@ def setup_logging() -> logging.Logger:
     ))
     logger.addHandler(fh)
 
-    # Dashboard ring-buffer handler
-    dh = DashboardHandler()
-    dh.setLevel(logging.INFO)
-    logger.addHandler(dh)
+    if headless:
+        import sys
+        # Standard console handler for headless mode
+        sh = logging.StreamHandler(sys.stdout)
+        sh.setLevel(logging.INFO)
+        sh.setFormatter(logging.Formatter(
+            "%(asctime)s | %(levelname)-7s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        ))
+        logger.addHandler(sh)
+    else:
+        # Dashboard ring-buffer handler
+        dh = DashboardHandler()
+        dh.setLevel(logging.INFO)
+        logger.addHandler(dh)
 
     return logger

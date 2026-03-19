@@ -30,9 +30,11 @@ async def odds_feed_loop(state: dict) -> None:
         window = state.get("window")
         if window and window.up_token_id and window.down_token_id:
             try:
-                # Use CLOB client's get_price method
-                up_price = client.get_price(window.up_token_id, side="BUY")
-                down_price = client.get_price(window.down_token_id, side="BUY")
+                loop = asyncio.get_event_loop()
+                # Use CLOB client's get_price method (non-blocking)
+                from functools import partial
+                up_price = await loop.run_in_executor(None, partial(client.get_price, window.up_token_id, side="BUY"))
+                down_price = await loop.run_in_executor(None, partial(client.get_price, window.down_token_id, side="BUY"))
 
                 # Parse response (can be dict or float)
                 if isinstance(up_price, dict):

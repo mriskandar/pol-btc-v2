@@ -33,6 +33,8 @@ async def price_feed_loop(state: dict) -> None:
                             price = float(data.get("p", 0))
                             if price > 0:
                                 state["btc_price"] = price
+                                import time
+                                state["btc_price_timestamp"] = time.time()
                         elif msg.type == aiohttp.WSMsgType.ERROR:
                             log.warning("WebSocket error")
                             break

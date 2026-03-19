@@ -42,7 +42,8 @@ async def equity_update_loop(clients, state: dict) -> None:
                     # Update per-wallet equity
                     if idx < len(state["wallets"]):
                         wallet_positions = state["wallets"][idx].get("positions", [])
-                        equity = get_total_equity(client, wallet_positions)
+                        loop = asyncio.get_event_loop()
+                        equity = await loop.run_in_executor(None, get_total_equity, client, wallet_positions)
                         state["wallets"][idx]["equity"] = equity
                         
                         total_equity["usdc_balance"] += equity["usdc_balance"]
@@ -68,7 +69,7 @@ async def dashboard_loop(state: dict) -> None:
             await asyncio.sleep(0.25)
 
 
-async def run_bot(dry_run: bool = False, sim_balance: float = 0) -> None:
+async def run_bot(dry_run: bool = False, sim_balance: float = 0, headless: bool = False) -> None:
     """Main async runner — starts all concurrent loops."""
     log = logging.getLogger("polybot")
 
@@ -106,16 +107,18 @@ async def run_bot(dry_run: bool = False, sim_balance: float = 0) -> None:
             asyncio.create_task(price_feed_loop(state)),
             asyncio.create_task(odds_feed_loop(state)),
             asyncio.create_task(sim_trade_loop(portfolio, state)),
-            asyncio.create_task(dashboard_loop(state)),
         ]
+        if not headless:
+            tasks.append(asyncio.create_task(dashboard_loop(state)))
     elif dry_run:
         log.info("Starting in DRY-RUN mode — dashboard only, no trading")
         tasks = [
             asyncio.create_task(market_discovery_loop(state)),
             asyncio.create_task(price_feed_loop(state)),
             asyncio.create_task(odds_feed_loop(state)),
-            asyncio.create_task(dashboard_loop(state)),
         ]
+        if not headless:
+            tasks.append(asyncio.create_task(dashboard_loop(state)))
     else:
         config.validate_trading_config()
         log.info("Initializing Polymarket clients...")
@@ -148,7 +151,8 @@ async def run_bot(dry_run: bool = False, sim_balance: float = 0) -> None:
             tasks.append(asyncio.create_task(position_loop(client, state, idx)))
 
         tasks.append(asyncio.create_task(equity_update_loop(clients, state)))
-        tasks.append(asyncio.create_task(dashboard_loop(state)))
+        if not headless:
+            tasks.append(asyncio.create_task(dashboard_loop(state)))
 
     try:
         await asyncio.gather(*tasks)
@@ -186,6 +190,11 @@ Examples:
         help="Start dashboard without trading (no auth required)",
     )
     parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run without the TUI dashboard (logs go to stdout)",
+    )
+    parser.add_argument(
         "--sim",
         nargs="?",
         const=10.0,
@@ -196,7 +205,7 @@ Examples:
     args = parser.parse_args()
 
     # Setup logging
-    setup_logging()
+    setup_logging(headless=args.headless)
     log = logging.getLogger("polybot")
 
     if args.approve:
@@ -213,7 +222,7 @@ Examples:
     console.print("[bold cyan][VOL] Polymarket Auto-Trader starting...[/]")
 
     try:
-        asyncio.run(run_bot(dry_run=args.dry_run, sim_balance=args.sim or 0))
+        asyncio.run(run_bot(dry_run=args.dry_run, sim_balance=args.sim or 0, headless=args.headless))
     except KeyboardInterrupt:
         console.print("\n[bold red]Shutdown complete.[/]")
         sys.exit(0)

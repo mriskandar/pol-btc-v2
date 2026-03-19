@@ -77,8 +77,11 @@ python -m src.main --sim
 # 👀 Dry run — dashboard only, no trades
 python -m src.main --dry-run
 
-# 🚀 Live trading
+# 🚀 Live trading (with TUI dashboard)
 python -m src.main
+
+# 🚀 Live trading (Headless - background logs only, no TUI)
+python -m src.main --headless
 ```
 
 Press `Ctrl+C` to stop.

@@ -379,9 +379,17 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
             await asyncio.sleep(0.5)
             continue
 
+        # Prevent stale trading if websocket disconnected
+        btc_price_ts = state.get("btc_price_timestamp", 0)
+        if btc_price_ts > 0 and time.time() - btc_price_ts > 2.0:
+            log.warning("Skipping trade evaluation: BTC price is stale (>2s). Waiting for websocket...")
+            await asyncio.sleep(0.5)
+            continue
+
         # Get balance for Kelly sizing
         wallet_positions = wallet_state.get("positions", [])
-        equity = get_total_equity(client, wallet_positions)
+        loop = asyncio.get_event_loop()
+        equity = await loop.run_in_executor(None, get_total_equity, client, wallet_positions)
         total_balance = equity["usdc_balance"]
 
         # Run quantitative model
@@ -412,7 +420,8 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
                 # ── LIVE TRADING: Fetch exact orderbook prices right before execution
                 # The continuous loop uses the 1-second cached background odds.
                 # Once the math says YES, we must verify with the live API to prevent slippage.
-                prices = _get_token_prices(client, window.up_token_id, window.down_token_id)
+                loop = asyncio.get_event_loop()
+                prices = await loop.run_in_executor(None, _get_token_prices, client, window.up_token_id, window.down_token_id)
                 exact_up_odds = prices["up"]
                 exact_down_odds = prices["down"]
                 
