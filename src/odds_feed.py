@@ -55,5 +55,5 @@ async def odds_feed_loop(state: dict) -> None:
             except Exception as e:
                 log.warning("Odds fetch error: %s", e)
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)
 

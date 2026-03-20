@@ -427,7 +427,7 @@ async def market_discovery_loop(state: dict) -> None:
 
                 # Poll faster while waiting for priceToBeat to appear
                 if window.price_to_beat == 0:
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(1.5)
                     continue
 
             else:

@@ -38,15 +38,18 @@ class TradeSignal:
 
 def estimate_p_true(gap: float, seconds_remaining: float, sigma_per_sec: float) -> float:
     """
-    Estimate true probability of UP winning using sigmoid model.
-    P(UP) = 1 / (1 + exp(-k * gap / sqrt(time)))
+    Estimate true probability of UP winning using a Normal CDF model.
+    P(UP) = N( gap / (sigma * sqrt(time)) )
     """
     if seconds_remaining <= 0:
         return 1.0 if gap > 0 else 0.0 if gap < 0 else 0.5
 
-    k = 182.0
-    x = k * gap / math.sqrt(seconds_remaining)
-    return sigmoid(x)
+    # Failsafe against zero or negative volatility configs
+    if sigma_per_sec <= 0:
+        sigma_per_sec = 0.75
+
+    x = gap / (sigma_per_sec * math.sqrt(seconds_remaining))
+    return norm_cdf(x)
 
 
 def calculate_edge(p_true: float, market_price: float) -> float:
