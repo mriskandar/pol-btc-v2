@@ -469,6 +469,7 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
                     wallet_state["position_token_id"] = token_id
                     wallet_state["position_shares"] = 999999.0  # FAK sell-all trick
             else:
+                gap = btc_price - window.price_to_beat
                 log.info("SIGNAL SKIP: %s | (Gap: $%.2f, Edge: %.2f%%)", signal.reason, abs(gap), signal.edge * 100)
         else:
             log.warning("Not enough data for strategy eval — skipping")
