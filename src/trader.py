@@ -381,8 +381,8 @@ async def trade_loop(client: ClobClient, state: dict, wallet_id: int = 0) -> Non
 
         # Prevent stale trading if websocket disconnected
         btc_price_ts = state.get("btc_price_timestamp", 0)
-        if btc_price_ts > 0 and time.time() - btc_price_ts > 2.0:
-            log.warning("Skipping trade evaluation: BTC price is stale (>2s). Waiting for websocket...")
+        if btc_price_ts > 0 and time.time() - btc_price_ts > 2.5:
+            log.warning("Skipping trade evaluation: BTC price is stale (>2.5s). Waiting for websocket...")
             await asyncio.sleep(0.5)
             continue
 

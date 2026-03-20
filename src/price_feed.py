@@ -24,7 +24,7 @@ async def price_feed_loop(state: dict) -> None:
     while True:
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.ws_connect(BINANCE_WS_URL) as ws:
+                async with session.ws_connect(BINANCE_WS_URL, heartbeat=15.0) as ws:
                     log.info("Connected to Binance WebSocket")
 
                     async for msg in ws:
